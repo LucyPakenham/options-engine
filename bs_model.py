@@ -4,7 +4,12 @@ Black-Scholes option pricing model.
 """
 
 import numpy as np
-from scipy.stats import norm
+import math
+
+
+def normal_cdf(x):
+    """Standard normal cumulative distribution function (replaces scipy's norm.cdf)."""
+    return 0.5 * (1 + math.erf(x / math.sqrt(2)))
 
 
 def black_scholes(S, K, T, r, sigma, option_type="call"):
@@ -22,9 +27,9 @@ def black_scholes(S, K, T, r, sigma, option_type="call"):
     d2 = d1 - sigma * np.sqrt(T)
 
     if option_type == "call":
-        price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+        price = S * normal_cdf(d1) - K * np.exp(-r * T) * normal_cdf(d2)
     elif option_type == "put":
-        price = K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
+        price = K * np.exp(-r * T) * normal_cdf(-d2) - S * normal_cdf(-d1)
     else:
         raise ValueError("option_type must be 'call' or 'put'")
 
