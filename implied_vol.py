@@ -7,12 +7,12 @@ Week 4 of options-engine project
 """
 
 import math
-from bs_model import black_scholes
+from bs_model import black_scholes, compute_d1_d2
 
 
 def raw_vega(S, K, T, r, sigma):
     """Unscaled vega: dPrice/dSigma. Used internally for Newton-Raphson steps."""
-    d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
+    d1, d2 = compute_d1_d2(S, K, T, r, sigma)
     normal_pdf_d1 = (1 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * d1**2)
     return S * normal_pdf_d1 * math.sqrt(T)
 
@@ -113,21 +113,20 @@ if __name__ == "__main__":
     recovered_sigma = implied_volatility(market_price, S, K, T, r, "call")
     print(f"Recovered implied vol: {recovered_sigma:.4f}")
 
+    # Deep out-of-the-money call — small vega, tests the bisection fallback
+    otm_price = black_scholes(100, 150, 0.25, 0.03, 0.25, "call")
+    print(
+        f"OTM price: {otm_price:.4f}, recovered vol: {implied_volatility(otm_price, 100, 150, 0.25, 0.03, 'call'):.4f}"
+    )
 
-# Deep out-of-the-money call — small vega, tests the bisection fallback
-otm_price = black_scholes(100, 150, 0.25, 0.03, 0.25, "call")
-print(
-    f"OTM price: {otm_price:.4f}, recovered vol: {implied_volatility(otm_price, 100, 150, 0.25, 0.03, 'call'):.4f}"
-)
+    # Put option — confirms it works for both option types, not just calls
+    put_price = black_scholes(100, 100, 0.25, 0.03, 0.25, "put")
+    print(
+        f"Put price: {put_price:.4f}, recovered vol: {implied_volatility(put_price, 100, 100, 0.25, 0.03, 'put'):.4f}"
+    )
 
-# Put option — confirms it works for both option types, not just calls
-put_price = black_scholes(100, 100, 0.25, 0.03, 0.25, "put")
-print(
-    f"Put price: {put_price:.4f}, recovered vol: {implied_volatility(put_price, 100, 100, 0.25, 0.03, 'put'):.4f}"
-)
-
-# High volatility regime
-high_vol_price = black_scholes(100, 100, 0.25, 0.03, 0.80, "call")
-print(
-    f"High-vol price: {high_vol_price:.4f}, recovered vol: {implied_volatility(high_vol_price, 100, 100, 0.25, 0.03, 'call'):.4f}"
-)
+    # High volatility regime
+    high_vol_price = black_scholes(100, 100, 0.25, 0.03, 0.80, "call")
+    print(
+        f"High-vol price: {high_vol_price:.4f}, recovered vol: {implied_volatility(high_vol_price, 100, 100, 0.25, 0.03, 'call'):.4f}"
+    )
